@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int    @id @default(autoincrement())
+  name         String @default("Unknown") // Default value for existing rows
+  email        String @unique
+  role        Userroles @default(User)
+  password     String
+  refreshToken String? @db.Text // Allow large refresh tokens
+  subscription Json?            // Store the subscription as JSON
+  favfoods     FavFood[]
+}
+
+model FavFood {
+  id           Int       @id @default(autoincrement())
+  type         String?
+  user         User      @relation(fields: [userId], references: [id])
+  userId       Int
+  place        String?
+  ffoodname String?
+  fplacename String?
+  ffoodtype String?
+  notified String? @default("not yet")
+  
+  // Relations to Special model
+  favfoodname  Special[] @relation("foodbyname", map: "FavFood_FoodByName_fkey")
+  favplacename Special[] @relation("placebyname", map: "FavFood_PlaceByName_fkey")
+  favtype      Special[] @relation("favbytype", map: "FavFood_FavByType_fkey")
+}
+
+model Places {
+  id            Int       @id @default(autoincrement())
+  name          String    @unique
+  location      String
+  type          String
+  imagepath     String
+  specialsById  Special[] @relation("PlaceById")   // Relation by ID
+  specialsByName Special[] @relation("PlaceByName") // Relation by Name
+}
+
+model Special {
+  id          Int        @id @default(autoincrement())
+  name        String
+  type        String
+  poster      String @default("beforetime")
+  foodorgroc  FoodOrGroc
+  imagepath   String
+  from        String
+  till        String
+  before      Float
+  after       Float
+  placesId    Int
+  places      Places     @relation("PlaceById", fields: [placesId], references: [id]) // Relation by ID
+  PlaceName   String
+  placeNa     Places     @relation("PlaceByName", fields: [PlaceName], references: [name]) // Relation by name
+  
+  // Inverse relations for FavFood
+  favfoodname  FavFood[] @relation("foodbyname")
+  favplacename FavFood[] @relation("placebyname")
+  favtype      FavFood[] @relation("favbytype")
+}
+
+enum Userroles {
+  User
+  Owner
+}
+
+enum FoodOrGroc {
+  Food
+  Groc
+  Both
+}
