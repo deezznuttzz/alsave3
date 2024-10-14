@@ -1,8 +1,8 @@
-// app/adminpage/upload.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
 export default function AdminUploadSpecial() {
   const [formData, setFormData] = useState({
@@ -19,13 +19,29 @@ export default function AdminUploadSpecial() {
     poster: '', // Initially empty, will be set to userId later
   });
 
-  // Fetch the userId from localStorage when the component mounts
+  const router = useRouter();
+
+  // Check if the user is an Admin
   useEffect(() => {
     const userId = localStorage.getItem('userId'); // Get the userId from localStorage
     if (userId) {
-      setFormData(prevFormData => ({ ...prevFormData, poster: userId })); // Set userId as the poster
+      axios.get(`/api/user/${userId}`)
+        .then(response => {
+          const userRole = response.data.role;
+          if (userRole !== 'Admin') {
+            router.push('/'); // Redirect to the root if not Admin
+          } else {
+            setFormData(prevFormData => ({ ...prevFormData, poster: userId })); // Set userId as the poster
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching user role:', error);
+          router.push('/'); // Redirect if there's an error fetching user data
+        });
+    } else {
+      router.push('/'); // Redirect if no userId is found
     }
-  }, []);
+  }, [router]);
 
   // Handle form change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

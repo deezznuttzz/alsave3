@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import Link from 'next/link';
 import SearchBar from './components/SearchBar';
 import SortDropdown from './components/SortDropdown';
 import StoreScroller from './components/StoreScroller';
+import styles from './ViewSpecials.module.css';  // Import CSS module
 
 type Special = {
   id: number;
-  name: string;         // Special name
+  name: string;
   type: string;
   foodorgroc: string;
   from: string;
@@ -16,61 +18,69 @@ type Special = {
   before: number;
   after: number;
   imagepath: string;
-  place: string;        // Store or place name (now included from API)
+  place: string;
 };
 
 export default function ViewSpecials() {
   const [specials, setSpecials] = useState<Special[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("priceAfter");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('priceAfter');
 
   const filteredGroceries = specials.filter((special) =>
     special.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    special.place.toLowerCase().includes(searchTerm.toLowerCase()) ||  // Using place field
+    special.place.toLowerCase().includes(searchTerm.toLowerCase()) ||
     special.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   useEffect(() => {
-    // Fetch the specials data from the API
-    axios.get('/api/apispecials/view')
-      .then(response => setSpecials(response.data))
-      .catch(error => console.error(error));
+    axios
+      .get('/api/apispecials/view')
+      .then((response) => setSpecials(response.data))
+      .catch((error) => console.error(error));
   }, []);
 
-  // Group specials by place (store)
   const specialsByPlace = filteredGroceries.reduce((acc: any, special: Special) => {
-    const place = special.place;  // Group by store name
+    const place = special.place;
     if (!acc[place]) {
       acc[place] = [];
     }
-    acc[place].push(special);  // Push specials under the store
+    acc[place].push(special);
     return acc;
   }, {});
 
-  // Sort specials within each store group
   Object.keys(specialsByPlace).forEach((place) => {
     specialsByPlace[place].sort((a: Special, b: Special) => {
-      if (sortBy === "type") return a.type.localeCompare(b.type);
-      if (sortBy === "priceAfter") return a.after - b.after; // Assuming 'after' represents 'priceAfter'
-      if (sortBy === "place") return a.place.localeCompare(b.place);
+      if (sortBy === 'type') return a.type.localeCompare(b.type);
+      if (sortBy === 'priceAfter') return a.after - b.after;
+      if (sortBy === 'place') return a.place.localeCompare(b.place);
       return 0;
     });
   });
 
   return (
     <div className="p-4">
+      <div className={styles.buttonGroup}>
+        <Link href="/signup">
+          <button className={styles.btn}>Signup</button>
+        </Link>
+        <Link href="/login">
+          <button className={styles.btn}>Signin</button>
+        </Link>
+        <Link href="/adminlogin">
+          <button className={styles.btn}>Business Page</button>
+        </Link>
+      </div>
+  
       <h1 className="text-xl font-bold mb-4">Groceries List</h1>
-
+  
       {/* Search Bar */}
       <SearchBar searchTerm={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-
+  
       {/* Sort Dropdown */}
       <SortDropdown sortBy={sortBy} onChange={(e) => setSortBy(e.target.value)} />
-
-      {/* Scrollable Grocery Lists by Store */}
+  
       {Object.keys(specialsByPlace).map((place) => (
-        <StoreScroller key={place} place={place} specials={specialsByPlace[place]} /> // Pass place to StoreScroller
+        <StoreScroller key={place} place={place} specials={specialsByPlace[place]} />
       ))}
     </div>
-  );
-}
+  );}

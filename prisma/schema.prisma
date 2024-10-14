@@ -76,6 +76,7 @@ model Special {
 enum Userroles {
   User
   Owner
+  Admin
 }
 
 enum FoodOrGroc {

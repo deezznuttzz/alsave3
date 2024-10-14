@@ -1,6 +1,7 @@
 // app/protected-page/page.tsx
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';  // Correct import for app router
 import axios from 'axios';
 import SearchBar from '../components/SearchBar';
 import SortDropdown from '../components/SortDropdown';
@@ -23,18 +24,34 @@ export default function ProtectedPage() {
   const [specials, setSpecials] = useState<Special[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("priceAfter");
+  const router = useRouter();  // Use router for redirection
 
   useEffect(() => {
     const userId = localStorage.getItem('userId'); // Get the userId from localStorage
+    
     if (userId) {
-      console.log('Logged in user ID:', userId); // Use userId in your component as needed
+      axios.get(`/api/user/${userId}`)  // Fetch the user data by userId
+        .then(response => {
+          const user = response.data;
+          
+          // Check if the user role is not "User", redirect to the root page
+          if (user.role !== 'User') {
+            router.push('/');  // Use router.push to navigate
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching user data:', error);
+        });
+    } else {
+      // If no userId is found, redirect to the root page
+      router.push('/');
     }
 
     // Fetch the specials data from the API
     axios.get('/api/apispecials/view')
       .then(response => setSpecials(response.data))
       .catch(error => console.error(error));
-  }, []);
+  }, [router]);
 
   // Filtering, sorting, and grouping specials logic
   const filteredGroceries = specials.filter((special) =>
